@@ -6,15 +6,17 @@ from PyQt6.QtWidgets import QApplication, QWidget, QLabel
 from PyQt6.QtCore import Qt
 
 SCREEN_SIZE = [600, 450]
+K = 2
 
 
 class Example(QWidget):
     def __init__(self):
         super().__init__()
         self.ll = [37.530887, 55.703118]
-        self.spn = [0.002, 0.002]
+        self.spn = [0.005, 0.005]
         self.getImage(self.ll, self.spn)
         self.initUI()
+
 
     def getImage(self, ll, spn):
         help_list = ','.join([str(i) for i in ll])
@@ -74,6 +76,17 @@ class Example(QWidget):
             self.ll = [self.ll[0], self.ll[1] - 0.001000]
             self.getImage(self.ll, self.spn)
             self.update_picture()
+        if event.key() == Qt.Key.Key_PageUp:
+            self.spn = [self.spn[0] * K, self.spn[1] *  K]
+            self.getImage(self.ll, self.spn)
+            print(self.spn)
+            self.update_picture()
+        if event.key() == Qt.Key.Key_PageDown:
+            self.spn = [self.spn[0] / K, self.spn[1] / K]
+            self.getImage(self.ll, self.spn)
+            print(self.spn)
+            self.update_picture()
+
 
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
