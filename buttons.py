@@ -7,6 +7,9 @@ from PyQt6.QtCore import Qt
 
 SCREEN_SIZE = [600, 450]
 K = 2
+MIN_SPN = 0.0001
+MAX_SPN = 90.0
+MOVE_STEP_COEFF = 0.1
 
 
 class Example(QWidget):
@@ -60,32 +63,42 @@ class Example(QWidget):
         os.remove(self.map_file)
 
     def keyPressEvent(self, event):
+        move_step = max(self.spn[0], self.spn[1]) * MOVE_STEP_COEFF
         if event.key() == Qt.Key.Key_Right:
-            self.ll = [self.ll[0] + 0.001000, self.ll[1]]
+            self.ll = [self.ll[0] + move_step, self.ll[1]]
             self.getImage(self.ll, self.spn)
             self.update_picture()
         if event.key() == Qt.Key.Key_Left:
-            self.ll = [self.ll[0] - 0.001000, self.ll[1]]
+            self.ll = [self.ll[0] - move_step, self.ll[1]]
             self.getImage(self.ll, self.spn)
             self.update_picture()
         if event.key() == Qt.Key.Key_Up:
-            self.ll = [self.ll[0], self.ll[1] + 0.001000]
+            self.ll = [self.ll[0], self.ll[1] + move_step]
             self.getImage(self.ll, self.spn)
             self.update_picture()
         if event.key() == Qt.Key.Key_Down:
-            self.ll = [self.ll[0], self.ll[1] - 0.001000]
+            self.ll = [self.ll[0], self.ll[1] - move_step]
             self.getImage(self.ll, self.spn)
             self.update_picture()
         if event.key() == Qt.Key.Key_PageUp:
-            self.spn = [self.spn[0] * K, self.spn[1] *  K]
-            self.getImage(self.ll, self.spn)
-            print(self.spn)
-            self.update_picture()
+            new_spn_lon = self.spn[0] * K
+            new_spn_lat = self.spn[1] * K
+            if new_spn_lon <= MAX_SPN and new_spn_lat <= MAX_SPN:
+                self.spn = [new_spn_lon, new_spn_lat]
+                self.getImage(self.ll, self.spn)
+                self.update_picture()
+            else:
+                pass
         if event.key() == Qt.Key.Key_PageDown:
-            self.spn = [self.spn[0] / K, self.spn[1] / K]
-            self.getImage(self.ll, self.spn)
-            print(self.spn)
-            self.update_picture()
+            new_spn_lon = self.spn[0] / K
+            new_spn_lat = self.spn[1] / K
+            if new_spn_lon >= MIN_SPN and new_spn_lat >= MIN_SPN:
+                self.spn = [new_spn_lon, new_spn_lat]
+                self.getImage(self.ll, self.spn)
+                print(self.spn)
+                self.update_picture()
+            else:
+                pass
 
 
 def except_hook(cls, exception, traceback):
