@@ -22,8 +22,8 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>614</width>
-    <height>616</height>
+    <width>689</width>
+    <height>646</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,9 +33,9 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
    <widget class="QLabel" name="map">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>0</y>
-      <width>791</width>
+      <width>671</width>
       <height>521</height>
      </rect>
     </property>
@@ -61,7 +61,7 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
      <rect>
       <x>462</x>
       <y>530</y>
-      <width>121</width>
+      <width>181</width>
       <height>20</height>
      </rect>
     </property>
@@ -113,12 +113,25 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
      <rect>
       <x>90</x>
       <y>570</y>
-      <width>491</width>
+      <width>561</width>
       <height>20</height>
      </rect>
     </property>
     <property name="readOnly">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="post_code">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>600</y>
+      <width>291</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Включить приписываение почтового индекса</string>
     </property>
    </widget>
   </widget>
@@ -127,6 +140,7 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
  <resources/>
  <connections/>
 </ui>
+
 '''
 
 
@@ -138,6 +152,7 @@ class Example(QMainWindow):
         self.ll = [37.530887, 55.703118]
         self.spn = [0.005, 0.005]
         self.theme = 'light'
+        self.post_code_mode = False
         self.pts = []
         self.getImage(self.ll, self.spn)
         self.setWindowTitle('Отображение карты')
@@ -147,7 +162,7 @@ class Example(QMainWindow):
         self.setFocus()
         self.search.clicked.connect(self.search_address)
         self.reset_button.clicked.connect(self.reset)
-
+        self.post_code.clicked.connect(self.post_code_search)
 
     def getImage(self, ll, spn):
         help_list = ','.join([str(i) for i in ll])
@@ -245,8 +260,10 @@ class Example(QMainWindow):
             if response:
                 # Преобразуем ответ в json-объект
                 json_response = response.json()
-                geocode = list(map(float, json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point'][
-                    "pos"].split()))
+                geocode = list(map(float,
+                                   json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"][
+                                       'Point'][
+                                       "pos"].split()))
                 self.pts.append(geocode)
                 self.ll = geocode
                 self.getImage(self.ll, self.spn)
@@ -280,10 +297,29 @@ class Example(QMainWindow):
         if response:
             # Преобразуем ответ в json-объект
             json_response = response.json()
-            adress = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["text"]
+            adress = \
+                json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["metaDataProperty"][
+                    "GeocoderMetaData"]["text"]
+            if self.post_code_mode is True:
+                try:
+                    post_code = \
+                    json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["metaDataProperty"][
+                        "GeocoderMetaData"]["Address"]["postal_code"]
+                    adress += ', ' + post_code
+                except:
+                    pass
             self.full_adress.setText(adress)
 
+    def post_code_search(self):
+        if self.post_code_mode is False:
+            self.post_code_mode = True
+            self.post_code.setText('Отключить приписываение почтового индекса')
+            self.search_full_address()
 
+        else:
+            self.post_code_mode = False
+            self.post_code.setText('Включить приписываение почтового индекса')
+            self.search_full_address()
 
 
 def except_hook(cls, exception, traceback):
