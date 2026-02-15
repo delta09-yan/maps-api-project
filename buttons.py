@@ -1,25 +1,82 @@
 import os
 import sys
+import io
 import requests
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QMainWindow
 from PyQt6.QtCore import Qt
+from PyQt6 import uic
 
 SCREEN_SIZE = [600, 450]
 K = 2
 MIN_SPN = 0.0001
 MAX_SPN = 90.0
 MOVE_STEP_COEFF = 0.1
+template = '''<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>614</width>
+    <height>584</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QLabel" name="map">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>0</y>
+      <width>791</width>
+      <height>521</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="light">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>530</y>
+      <width>111</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Темная тема</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+'''
 
 
-class Example(QWidget):
+class Example(QMainWindow):
     def __init__(self):
         super().__init__()
+        f = io.StringIO(template)
+        uic.loadUi(f, self)
         self.ll = [37.530887, 55.703118]
         self.spn = [0.005, 0.005]
+        self.theme = 'light'
         self.getImage(self.ll, self.spn)
-        self.initUI()
-
+        self.setWindowTitle('Отображение карты')
+        self.pixmap = QPixmap(self.map_file)
+        self.map.setPixmap(self.pixmap)
+        self.light.clicked.connect(self.changetheme)
+        self.setFocus()
 
     def getImage(self, ll, spn):
         help_list = ','.join([str(i) for i in ll])
@@ -29,7 +86,7 @@ class Example(QWidget):
         ll_spn = f'll={help_list}&spn={help_list_spn}'
         # Готовим запрос.
 
-        map_request = f"{server_address}{ll_spn}&apikey={api_key}"
+        map_request = f"{server_address}{ll_spn}&apikey={api_key}&theme={self.theme}"
         response = requests.get(map_request)
 
         if not response:
@@ -43,20 +100,9 @@ class Example(QWidget):
         with open(self.map_file, "wb") as file:
             file.write(response.content)
 
-    def initUI(self):
-        self.setGeometry(100, 100, *SCREEN_SIZE)
-        self.setWindowTitle('Отображение карты')
-
-        ## Изображение
-        self.pixmap = QPixmap(self.map_file)
-        self.image = QLabel(self)
-        self.image.move(0, 0)
-        self.image.resize(600, 450)
-        self.image.setPixmap(self.pixmap)
-
     def update_picture(self):
         self.pixmap = QPixmap(self.map_file)
-        self.image.setPixmap(self.pixmap)
+        self.map.setPixmap(self.pixmap)
 
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
@@ -100,6 +146,19 @@ class Example(QWidget):
             else:
                 pass
 
+    def changetheme(self):
+        if self.theme == 'light':
+            self.theme = 'dark'
+            self.light.setText('Светлая тема')
+            self.getImage(self.ll, self.spn)
+            self.update_picture()
+            self.setFocus()
+        else:
+            self.theme = 'light'
+            self.light.setText('Темная тема')
+            self.getImage(self.ll, self.spn)
+            self.update_picture()
+            self.setFocus()
 
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
