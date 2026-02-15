@@ -80,6 +80,19 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
      <string>Поиск</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="reset_button">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>530</y>
+      <width>171</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Сброс поискового результата</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
@@ -105,6 +118,7 @@ class Example(QMainWindow):
         self.light.clicked.connect(self.changetheme)
         self.setFocus()
         self.search.clicked.connect(self.search_address)
+        self.reset_button.clicked.connect(self.reset)
 
 
     def getImage(self, ll, spn):
@@ -215,6 +229,15 @@ class Example(QMainWindow):
                 print("Ошибка выполнения запроса:")
                 print(geocoder_request)
                 print("Http статус:", response.status_code, "(", response.reason, ")")
+
+    def reset(self):
+        try:
+            self.pts.remove(self.ll)
+            self.getImage(self.ll, self.spn)
+            self.update_picture()
+            self.setFocus()
+        except:
+            pass
 
 
 
