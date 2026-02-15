@@ -54,6 +54,32 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
      <string>Темная тема</string>
     </property>
    </widget>
+   <widget class="QLineEdit" name="text_edit">
+    <property name="geometry">
+     <rect>
+      <x>462</x>
+      <y>530</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="search">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>530</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Поиск</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
@@ -71,12 +97,15 @@ class Example(QMainWindow):
         self.ll = [37.530887, 55.703118]
         self.spn = [0.005, 0.005]
         self.theme = 'light'
+        self.pts = []
         self.getImage(self.ll, self.spn)
         self.setWindowTitle('Отображение карты')
         self.pixmap = QPixmap(self.map_file)
         self.map.setPixmap(self.pixmap)
         self.light.clicked.connect(self.changetheme)
         self.setFocus()
+        self.search.clicked.connect(self.search_address)
+
 
     def getImage(self, ll, spn):
         help_list = ','.join([str(i) for i in ll])
@@ -87,6 +116,9 @@ class Example(QMainWindow):
         # Готовим запрос.
 
         map_request = f"{server_address}{ll_spn}&apikey={api_key}&theme={self.theme}"
+        if self.pts != []:
+            pts = '~'.join([f"{coord[0]},{coord[1]},pm2rdm" for coord in self.pts])
+            map_request += f'&pt={pts}'
         response = requests.get(map_request)
 
         if not response:
@@ -103,6 +135,7 @@ class Example(QMainWindow):
     def update_picture(self):
         self.pixmap = QPixmap(self.map_file)
         self.map.setPixmap(self.pixmap)
+        self.setFocus()
 
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
@@ -160,8 +193,35 @@ class Example(QMainWindow):
             self.update_picture()
             self.setFocus()
 
+    def search_address(self):
+        if self.text_edit.text():
+            api_key = '8013b162-6b42-4997-9691-77b7074026e0'
+            server_address = 'http://geocode-maps.yandex.ru/1.x/?'
+            geocoder_request = f'{server_address}apikey={api_key}&geocode={self.text_edit.text()}&format=json'
+            # Выполняем запрос.
+            response = requests.get(geocoder_request)
+            if response:
+                # Преобразуем ответ в json-объект
+                json_response = response.json()
+                geocode = list(map(float, json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point'][
+                    "pos"].split()))
+                self.pts.append(geocode)
+                self.ll = geocode
+                self.getImage(self.ll, self.spn)
+                self.update_picture()
+                self.setFocus()
+
+            else:
+                print("Ошибка выполнения запроса:")
+                print(geocoder_request)
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+
+
+
+
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
