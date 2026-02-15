@@ -264,6 +264,8 @@ class Example(QMainWindow):
             self.pts.remove(self.ll)
             self.getImage(self.ll, self.spn)
             self.update_picture()
+            self.full_adress.setText('')
+            self.text_edit.setText('')
             self.setFocus()
         except:
             pass
