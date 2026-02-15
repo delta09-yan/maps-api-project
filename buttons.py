@@ -1,6 +1,8 @@
 import os
 import sys
 import io
+from pprint import pprint
+
 import requests
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QMainWindow
@@ -21,7 +23,7 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
     <x>0</x>
     <y>0</y>
     <width>614</width>
-    <height>584</height>
+    <height>616</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -91,6 +93,32 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
     </property>
     <property name="text">
      <string>Сброс поискового результата</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>570</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Полный адрес:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="full_adress">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>570</y>
+      <width>491</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
@@ -229,6 +257,7 @@ class Example(QMainWindow):
                 print("Ошибка выполнения запроса:")
                 print(geocoder_request)
                 print("Http статус:", response.status_code, "(", response.reason, ")")
+            self.search_full_address()
 
     def reset(self):
         try:
@@ -238,6 +267,19 @@ class Example(QMainWindow):
             self.setFocus()
         except:
             pass
+
+    def search_full_address(self):
+        api_key = '8013b162-6b42-4997-9691-77b7074026e0'
+        server_address = 'http://geocode-maps.yandex.ru/1.x/?'
+        help_list = ','.join([str(i) for i in self.ll])
+        geocoder_request = f'{server_address}apikey={api_key}&geocode={help_list}&format=json'
+        # Выполняем запрос.
+        response = requests.get(geocoder_request)
+        if response:
+            # Преобразуем ответ в json-объект
+            json_response = response.json()
+            adress = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["text"]
+            self.full_adress.setText(adress)
 
 
 
